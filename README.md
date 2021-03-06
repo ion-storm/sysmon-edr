@@ -1,15 +1,17 @@
 ## sysmon-edr
 
-# Sysmon EDR Features
-Mitre ATT&CK Desktop Alerts
-
-Mitre ATT&CK Active Response
-* Active Response Current Features:
+# Sysmon EDR Active Response Features
+* Mitre ATT&CK Desktop Alerts
+* Yara Scanning
 * Malicious Process Killing
-* Host isolation with null routes
-* Host Isolation with system shut down
+* Killing of Malicious process connections
+* Blocking of Process network connectivity with Windows Firewall
+* Response with Yara Detections
+
 
 # Planned Future features:
+* Host isolation with null routes
+* Host Isolation with system shut down
 * Host isolation with exceptions for support sites/AV/EDR rule to allow outlook/common apps only.
 * Automated process memory dumping for forensics
 * Automated threat removal based on signatures and behavior: Process Kill then Quarantine or Delete file, Service stop and quarantine or delete file, Kill process and remove registry persistence, startup folder file removal.
