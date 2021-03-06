@@ -10,6 +10,7 @@
 $Notify = "TRUE"
 # Force Null route if route exists
 $Force = "TRUE"
+$cports = "C:\programdata\edr\cports.exe"
 $notification = "A Suspicious event was detected on your system, notify the SOC Team immediately!"
 Register-WmiEvent -Query "Select * From __InstanceCreationEvent Where TargetInstance ISA 'Win32_NTLogEvent' AND TargetInstance.LogFile='Microsoft-Windows-Sysmon/Operational' AND TargetInstance.Message Like '%Alert%'" -SourceIdentifier "Sysmon"
 Try{
@@ -37,7 +38,7 @@ Try{
 			$msg3 = $msg2 | Select -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
             #Debug $Message uncomment to remove
-            #foreach($i in $msg){Write-Host $i}
+            foreach($i in $msg){Write-Host $i}
 			# Key/Value Tags from Sysmon RuleName
 			$data = $msg[1] -split ','
 			$data2 = $data |ConvertFrom-StringData
@@ -73,7 +74,7 @@ Try{
 			# Begin Actions
             if($msg[1].ToLower().Contains("alert=")) #Mitre Attack Desktop Alerts
             {
-                Write-Host "[+] Alert: $Alert"
+                Write-Host "[+] Alert: $Alert User: $User Executed $CommandLine within $CurrentDirectory from $ParentImage at $UtcTime"
                 if($Notify){
                     $message = "Alert: " + $Alert + "`n" + "Technique: " + $Technique + "`n" + "Tactic: " + $Tactic + "`n" + " User: $User Executed $CommandLine within $CurrentDirectory from $ParentImage at $UtcTime" + "`n" + "$notification"
                     $message | msg *
@@ -87,9 +88,9 @@ Try{
 					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
 					}
 				if($msg[1].ToLower().Contains("fw=y")){
-					Write-Host "[+] Blocking process from internet access..."
-					netsh advfirewall firewall add rule name="$Alert" dir=in action=block profile=any program="$Image"
-					netsh advfirewall firewall add rule name="$Alert" dir=out action=block profile=any program="$Image"
+					Write-Host "[+] Blocking process: $image from internet access..."
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
 					}
 				}
             else {
@@ -99,7 +100,7 @@ Try{
 		if($EventID -eq 3)
         {
             #Debug $Message uncomment to remove
-            #foreach($i in $msg){Write-Host $i}
+            foreach($i in $msg){Write-Host $i}
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
 			$msg3 = $msg2 | Select -Skip 2
@@ -139,6 +140,15 @@ Try{
 				if($msg[1].ToLower().Contains("kp=y")){
 					Write-Host "[+] Killing: $ProcessId"
 					taskkill /F /PID $ProcessId
+					}
+				if($msg[1].ToLower().Contains("kc=y")){
+					Write-Host "[+] Killing connection to: $DestinationIp"
+					start-process -FilePath $cports -ArgumentList "/close * * * * $ProcessId"
+					}
+				if($msg[1].ToLower().Contains("fw=y")){
+					Write-Host "[+] Blocking process: $image from internet access..."
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
 					}
 				if($msg[1].ToLower().Contains("nr=y")){
 					# This is currently untested, code used from https://gallery.technet.microsoft.com/Add-and-Remove-Null-Routes-cfc77032
