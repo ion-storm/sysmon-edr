@@ -6,9 +6,14 @@ $service = Get-Service -Name sysmon_edr -ErrorAction SilentlyContinue
 $installdir = 'C:\Programdata\edr\'
 If (!(Test-Path -Path 'C:\Programdata\edr')){
 	mkdir "$installdir"
+	mkdir "$installdir\yararules\"
 	copy-item "$PSScriptRoot\edr.ps1" "$installdir" -Force -EA SilentlyContinue
 	copy-item "$PSScriptRoot\enable_sysmon_wmi.reg" "$installdir" -Force -EA SilentlyContinue
 	copy-item "$PSScriptRoot\start_edr.bat" "$installdir" -Force -EA SilentlyContinue
+	copy-item "$PSScriptRoot\cports.exe" "$installdir" -Force -EA SilentlyContinue
+	copy-item "$PSScriptRoot\yara64.exe" "$installdir" -Force -EA SilentlyContinue
+	copy-item "$PSScriptRoot\china_chopper.yar" "$installdir\yararules\" -Force -EA SilentlyContinue
+	copy-item "$PSScriptRoot\chopper.aspx" "$installdir\yararules\" -Force -EA SilentlyContinue
 	}
 	If (!($service.Length -gt 0)){
 		regedit.exe /s $regpath
