@@ -13,7 +13,8 @@
 	Shut down System
 	Firewall off Processes
 	Desktop Notifications
-
+	Yara Scanning
+	
 	Instructions:
 	Set your Sysmon rules to Comma Seperated Key Value Pairs
 	Ensure that Registry file is imported to allow WMI event Subscription to the windows event log
@@ -31,13 +32,18 @@
 	Future Feature ideas:
 	Automatic restore of files from ransomware events with mounting & restore of shadow copies or integration with veeam to restore files.
 	Uninjection of injected processes
-	Yara scanning
+	Network Isolation
+	Eventlog Logging of detections, responses and errors.
+	Yara scanning of detections
+	Archiving of files detected as malicious with password protected archive
+	Implement modified invoke-dropnet instead of cports with process name/path killing of connections.
 #>
 <# Option Variables #>
 $Notify = "TRUE"
 # Force Null route if route exists
 $Force = "TRUE"
 $cports = "C:\programdata\edr\cports.exe"
+$yararules = "C:\programdata\sysmon\edr\yararules\china_chopper.yar"
 $notification = "A Suspicious event was detected on your system, notify the SOC Team immediately!"
 
 Register-WmiEvent -Query "Select * From __InstanceCreationEvent Where TargetInstance ISA 'Win32_NTLogEvent' AND TargetInstance.LogFile='Microsoft-Windows-Sysmon/Operational' AND TargetInstance.Message Like '%Alert%'" -SourceIdentifier "Sysmon"
@@ -117,24 +123,32 @@ Try{
 				if($msg[1].ToLower().Contains("kp=y")){
 					Write-Host "[+] Killing: $ProcessId"
 					taskkill /F /T /PID $ProcessId
-					}
+				}
 				# Parent Process Killer
 				if($msg[1].ToLower().Contains("kpp=y")){
 					Write-Host "[+] Killing: $ParentProcessId"
 					taskkill /F /T /PID $ParentProcessId
-					}
+				}
 				# Shutdown System
 				if($msg[1].ToLower().Contains("sd=y")){
 					Write-Host "[+] shutting down system..."
 					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
-					}
+				}
 				# Firewall Process
 				if($msg[1].ToLower().Contains("fw=y")){
 					Write-Host "[+] Blocking process: $image from internet access..."
 					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
 					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
-					}
 				}
+				# Yara Scan
+				if($msg[1].ToLower().Contains("yara=y")){
+					Write-Host "[+] Scanning $image with Yara..."
+					$result = C:\programdata\edr\yara64.exe -c $yararules "$Image"
+					if($result.Equals("1")){ 
+					Write-Host "[+] Yara detected file $Image as malicious or suspicious"
+                    }
+				}
+			}
             else {
             }
         }
@@ -187,23 +201,31 @@ Try{
 				if($msg[1].ToLower().Contains("kp=y")){
 					Write-Host "[+] Killing: $ProcessId"
 					taskkill /F /T /PID $ProcessId
-					}
+				}
 				# Shutdown System
 				if($msg[1].ToLower().Contains("kc=y")){
 					Write-Host "[+] Killing connection to: $DestinationIp"
 					start-process -FilePath $cports -ArgumentList "/close * * * * $ProcessId"
-					}
+				}
 				# Connection Killer
 				if($msg[1].ToLower().Contains("kc=y")){
 					Write-Host "[+] Killing connection to: $DestinationIp"
 					start-process -FilePath $cports -ArgumentList "/close * * * * $ProcessId"
-					}
+				}
 				# Firewall Blocking
 				if($msg[1].ToLower().Contains("fw=y")){
 					Write-Host "[+] Blocking process: $image from internet access..."
 					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
 					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
-					}
+				}
+				# Yara Scan
+				if($msg[1].ToLower().Contains("yara=y")){
+					Write-Host "[+] Scanning $image with Yara..."
+					$result = C:\programdata\edr\yara64.exe -c $yararules "$Image"
+					if($result.Equals("1")){ 
+					Write-Host "[+] Yara detected file $Image as malicious or suspicious"
+                    }
+				}
 				# Null Route (Unfinished)
 				if($msg[1].ToLower().Contains("nr=y")){
 					# This is currently untested, code used from https://gallery.technet.microsoft.com/Add-and-Remove-Null-Routes-cfc77032
@@ -278,24 +300,31 @@ Try{
 				if($msg[1].ToLower().Contains("kp=y")){
 					Write-Host "[+] Killing: $ProcessId"
 					taskkill /F /T /PID $ProcessId
-					}
+				}
 				# Connection Killer
 				if($msg[1].ToLower().Contains("kc=y")){
 					Write-Host "[+] Killing connection to: $DestinationIp"
 					start-process -FilePath $cports -ArgumentList "/close * * * * $ProcessId"
-					}
+				}
 				# Shutdown System
 				if($msg[1].ToLower().Contains("sd=y")){
 					Write-Host "[+] shutting down system..."
 					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
-					}
+				}
+				if($msg[1].ToLower().Contains("yara=y")){
+					Write-Host "[+] Scanning $image with Yara..."
+					$result = C:\programdata\edr\yara64.exe -c $yararules "$TargetFilename"
+					if($result.Equals("1")){ 
+					Write-Host "[+] Yara detected file $TargetFilename as malicious or suspicious"
+                    }
+				}
 				# Firewall Blocking
 				if($msg[1].ToLower().Contains("fw=y")){
 					Write-Host "[+] Blocking process: $image from internet access..."
 					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
 					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
-					}
 				}
+			}
             else {
             }
         }
