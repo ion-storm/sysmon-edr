@@ -4,8 +4,7 @@
   \__ \/ / / / ___/ __ `__ \/ __ \/ __ \   / __/ / / / / /_/ /
  ___/ / /_/ (__  ) / / / / / /_/ / / / /  / /___/ /_/ / _, _/ 
 /____/\__, /____/_/ /_/ /_/\____/_/ /_/  /_____/_____/_/ |_|  
-     /____/ v1 by ionstorm                                                  
-
+     /____/ v1 by ionstorm
 	Features:
 	MITRE ATT&CK Rule Tagging
 	Kill Parent Processes and all Child Processes
@@ -22,9 +21,11 @@
 	Your sysmon Rulename must contain Alert with the following response tags:
 	kp=y 	Kill Processes
 	kpp=y 	Kill Parent Processes & all Child Processes
+	kc=y    Kill network connections
 	sd=y 	Shutdown System
 	nr=y 	Null route ip (Unfinished)
 	fw=y	Add Windows Firewall Rule to block inbound/outbound network connectivity from process
+	yara=y  Yara Scan file
 	
 	You can add Multiple tags for multiple Live responses
 	Send desktop notifications to all users
@@ -43,7 +44,7 @@ $Notify = "TRUE"
 # Force Null route if route exists
 $Force = "TRUE"
 $cports = "C:\programdata\edr\cports.exe"
-$yararules = "C:\programdata\sysmon\edr\yararules\china_chopper.yar"
+$yararules = "C:\programdata\edr\yararules\china_chopper.yar"
 $notification = "A Suspicious event was detected on your system, notify the SOC Team immediately!"
 
 Register-WmiEvent -Query "Select * From __InstanceCreationEvent Where TargetInstance ISA 'Win32_NTLogEvent' AND TargetInstance.LogFile='Microsoft-Windows-Sysmon/Operational' AND TargetInstance.Message Like '%Alert%'" -SourceIdentifier "Sysmon"
@@ -312,9 +313,9 @@ Try{
 					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
 				}
 				if($msg[1].ToLower().Contains("yara=y")){
-					Write-Host "[+] Scanning $image with Yara..."
+					Write-Host "[+] Scanning $TargetFilename with Yara..."
 					$result = C:\programdata\edr\yara64.exe -c $yararules "$TargetFilename"
-					if($result.Equals("1")){ 
+					if($result){ 
 					Write-Host "[+] Yara detected file $TargetFilename as malicious or suspicious"
                     }
 				}
