@@ -23,9 +23,10 @@
 	kpp=y 	Kill Parent Processes & all Child Processes
 	kc=y    Kill network connections
 	sd=y 	Shutdown System
-	nr=y 	Null route ip (Unfinished)
 	fw=y	Add Windows Firewall Rule to block inbound/outbound network connectivity from process
 	yara=y  Yara Scan file
+	ydel=y  Delete on Yara Detection
+	nr=y 	Null route ip (Unfinished)
 	
 	You can add Multiple tags for multiple Live responses
 	Send desktop notifications to all users
@@ -38,6 +39,10 @@
 	Yara scanning of detections
 	Archiving of files detected as malicious with password protected archive
 	Implement modified invoke-dropnet instead of cports with process name/path killing of connections.
+	
+	To Do:
+	Move Actions to Function Module
+	Threading
 #>
 <# Option Variables #>
 $Notify = "TRUE"
@@ -65,8 +70,7 @@ Try{
 		$Date = $Year + "/" + $Month + "/" + $Day + " " + $Hour + ":" + $Minutes
 		$Date = (([DateTime]$Date)).AddHours(9).ToString("yyyy/MM/dd HH:mm:ss")
 		$Message = $Log.Message
-
-
+		#
         #Process Create Event Detection and Response
 		if($EventID -eq 1)
         {
@@ -74,10 +78,10 @@ Try{
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
 			$msg3 = $msg2 | Select -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
-			
+			#
             #Debug $Message uncomment to remove
             #foreach($i in $msg){Write-Host $i}
-			
+			#
 			# Key/Value Tags from Sysmon RuleName
 			$data = $msg[1] -split ','
 			$data2 = $data |ConvertFrom-StringData
@@ -85,7 +89,7 @@ Try{
 			$Technique = $data2."Technique"
 			$Tactic = $data2."Tactic"
 			$Alert = $data2."Alert"
-			
+			#
 			# Sysmon Event ID 1 Vars
 			$UtcTime = $sysmon."UtcTime"
 			$ProcessGuid = $sysmon."ProcessGuid"
@@ -111,7 +115,7 @@ Try{
 			$ParentProcessId = $sysmon."ParentProcessId"
 			$ParentImage = $sysmon."ParentImage"
 			$ParentCommandLine = $sysmon."ParentCommandLine"
-
+			#
 			# Begin Actions
             if($msg[1].ToLower().Contains("alert=")) #Mitre Attack Desktop Alerts
             {
@@ -143,11 +147,18 @@ Try{
 				}
 				# Yara Scan
 				if($msg[1].ToLower().Contains("yara=y")){
-					Write-Host "[+] Scanning $image with Yara..."
+					Write-Host "[+] Scanning $Image with Yara..."
 					$result = C:\programdata\edr\yara64.exe -c $yararules "$Image"
-					if($result.Equals("1")){ 
-					Write-Host "[+] Yara detected file $Image as malicious or suspicious"
+					if($result -gt "0"){ 
+					Write-Host "[+] Yara detected file $Image as malicious or suspicious..."
+					if($msg[1].ToLower().Contains("ydel=y")){
+						Write-Host "[+] Deleting file $Image"
+						Remove-Item -Path "$Image" -Force
+					}
                     }
+					else {
+						Write-Host "[-] Yara detected file as clean.."
+					}
 				}
 			}
             else {
@@ -158,20 +169,20 @@ Try{
         {
             #Debug $Message uncomment to remove
             #foreach($i in $msg){Write-Host $i}
-			
+			#
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
 			$msg3 = $msg2 | Select -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			$data = $msg[1] -split ','
 			$data2 = $data |ConvertFrom-StringData
-			
+			#
 			# Key/Value Tags from Sysmon RuleName
 			$MitreRef = $data2."MitreRef"
 			$Technique = $data2."Technique"
 			$Tactic = $data2."Tactic"
 			$Alert = $data2."Alert"
-			
+			#
 			# Sysmon Event ID 3 
 			$UtcTime = $sysmon."UtcTime"
 			$ProcessGuid = $sysmon."ProcessGuid"
@@ -190,7 +201,7 @@ Try{
 			$DestinationHostname = $sysmon."DestinationHostname"
 			$DestinationPort = $sysmon."DestinationPort"
 			$DestinationPortName = $sysmon."DestinationPortName"
-			
+			#
             if($msg[1].ToLower().Contains("alert=")) #Mitre Attack Desktop Alerts
             {
                 Write-Host "[+] Alert: $Alert"
@@ -204,9 +215,9 @@ Try{
 					taskkill /F /T /PID $ProcessId
 				}
 				# Shutdown System
-				if($msg[1].ToLower().Contains("kc=y")){
-					Write-Host "[+] Killing connection to: $DestinationIp"
-					start-process -FilePath $cports -ArgumentList "/close * * * * $ProcessId"
+				if($msg[1].ToLower().Contains("sd=y")){
+					Write-Host "[+] shutting down system..."
+					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
 				}
 				# Connection Killer
 				if($msg[1].ToLower().Contains("kc=y")){
@@ -221,12 +232,20 @@ Try{
 				}
 				# Yara Scan
 				if($msg[1].ToLower().Contains("yara=y")){
-					Write-Host "[+] Scanning $image with Yara..."
+					Write-Host "[+] Scanning $Image with Yara..."
 					$result = C:\programdata\edr\yara64.exe -c $yararules "$Image"
-					if($result.Equals("1")){ 
-					Write-Host "[+] Yara detected file $Image as malicious or suspicious"
+					if($result -gt "0"){ 
+					Write-Host "[+] Yara detected file $Image as malicious or suspicious..."
+					if($msg[1].ToLower().Contains("ydel=y")){
+						Write-Host "[+] Deleting file $Image"
+						Remove-Item -Path "$Image" -Force
+					}
                     }
+					else {
+						Write-Host "[-] Yara detected file as clean.."
+					}
 				}
+				<#
 				# Null Route (Unfinished)
 				if($msg[1].ToLower().Contains("nr=y")){
 					# This is currently untested, code used from https://gallery.technet.microsoft.com/Add-and-Remove-Null-Routes-cfc77032
@@ -257,6 +276,7 @@ Try{
 						}
 					}
 				}
+				#>
             }
             else {
             }
@@ -268,10 +288,10 @@ Try{
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
 			$msg3 = $msg2 | Select -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
-
+			#
             #Debug $Message uncomment to remove
             foreach($i in $msg){Write-Host $i}
-			
+			#
 			# Key/Value Tags from Sysmon RuleName
 			$data = $msg[1] -split ','
 			$data2 = $data |ConvertFrom-StringData
@@ -279,7 +299,7 @@ Try{
 			$Technique = $data2."Technique"
 			$Tactic = $data2."Tactic"
 			$Alert = $data2."Alert"
-			
+			#
 			# Sysmon Event ID 11 Vars
 			$UtcTime = $sysmon."UtcTime"
 			$ProcessGuid = $sysmon."ProcessGuid"
@@ -287,7 +307,7 @@ Try{
 			$Image = $sysmon."Image"
 			$TargetFilename = $sysmon."TargetFilename"
 			$CreationUtcTime = $sysmon."CreationUtcTime"
-			
+			#
 			# Begin Actions
             if($msg[1].ToLower().Contains("alert=")) #Mitre Attack Desktop Alerts
             {
@@ -312,12 +332,164 @@ Try{
 					Write-Host "[+] shutting down system..."
 					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
 				}
+				# Yara Scan
 				if($msg[1].ToLower().Contains("yara=y")){
 					Write-Host "[+] Scanning $TargetFilename with Yara..."
 					$result = C:\programdata\edr\yara64.exe -c $yararules "$TargetFilename"
-					if($result){ 
-					Write-Host "[+] Yara detected file $TargetFilename as malicious or suspicious"
+					if($result -gt "0"){ 
+					Write-Host "[+] Yara detected file $TargetFilename as malicious or suspicious..."
+					if($msg[1].ToLower().Contains("ydel=y")){
+						Write-Host "[+] Deleting file $targetFilename"
+						Remove-Item -Path "$TargetFilename" -Force
+					}
                     }
+					else {
+						Write-Host "[-] Yara detected file as clean.."
+					}
+				}
+				# Firewall Blocking
+				if($msg[1].ToLower().Contains("fw=y")){
+					Write-Host "[+] Blocking process: $image from internet access..."
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
+				}
+			}
+            else {
+            }
+        }
+        #Registry Items
+		if($EventID -eq 13)
+        {
+            $msg = $Message -split "`r`n"
+			$msg2 = $msg.replace(': ','=').replace('\','\\')
+			$msg3 = $msg2 | Select -Skip 2
+			$sysmon = $msg3 | ConvertFrom-StringData
+			#
+            #Debug $Message uncomment to remove
+            foreach($i in $msg){Write-Host $i}
+			#
+			# Key/Value Tags from Sysmon RuleName
+			$data = $msg[1] -split ','
+			$data2 = $data |ConvertFrom-StringData
+			$MitreRef = $data2."MitreRef"
+			$Technique = $data2."Technique"
+			$Tactic = $data2."Tactic"
+			$Alert = $data2."Alert"
+			#
+			# Sysmon Event ID 13 Vars
+			$UtcTime = $sysmon."UtcTime"
+			$ProcessGuid = $sysmon."ProcessGuid"
+			$ProcessId = $sysmon."ProcessId"
+			$Image = $sysmon."Image"
+			$TargetObject = $sysmon."TargetObject"
+			$EventType = $sysmon."EventType"
+			$Details = $sysmon."Details"
+			#
+			# Begin Actions
+            if($msg[1].ToLower().Contains("alert=")) #Mitre Attack Desktop Alerts
+            {
+				# Desktop Alerts
+                Write-Host "[+] Alert: $Alert Process: $Image Created Registry Item $TargetObject with details: $Details from Process ID: $ProcessId at $UtcTime"
+                if($Notify){
+                    $message = "Alert: " + $Alert + "`n" + "Technique: " + $Technique + "`n" + "Tactic: " + $Tactic + "`n" + " $Alert Process: $Image Created $TargetFilename with Process ID: $ProcessId at $UtcTime" + "`n" + "$notification"
+                    $message | msg *
+                }
+				#Process Killer
+				if($msg[1].ToLower().Contains("kp=y")){
+					Write-Host "[+] Killing: $ProcessId"
+					taskkill /F /T /PID $ProcessId
+				}
+				# Connection Killer
+				if($msg[1].ToLower().Contains("kc=y")){
+					Write-Host "[+] Killing connection to: $DestinationIp"
+					start-process -FilePath $cports -ArgumentList "/close * * * * $ProcessId"
+				}
+				# Shutdown System
+				if($msg[1].ToLower().Contains("sd=y")){
+					Write-Host "[+] shutting down system..."
+					shutdown.exe -s -t 30 -c "This system is shutting down in 30 seconds, save your work immediately.."
+				}
+				# Yara Scan
+				if($msg[1].ToLower().Contains("yara=y")){
+					Write-Host "[+] Scanning $TargetFilename with Yara..."
+					$result = C:\programdata\edr\yara64.exe -c $yararules "$TargetFilename"
+					if($result -gt "0"){ 
+					Write-Host "[+] Yara detected file $TargetFilename as malicious or suspicious..."
+					if($msg[1].ToLower().Contains("ydel=y")){
+						Write-Host "[+] Deleting file $targetFilename"
+						Remove-Item -Path "$TargetFilename" -Force
+					}
+                    }
+					else {
+						Write-Host "[-] Yara detected file as clean.."
+					}
+				}
+				# Firewall Blocking
+				if($msg[1].ToLower().Contains("fw=y")){
+					Write-Host "[+] Blocking process: $image from internet access..."
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image in" protocol=tcp dir=in enable=yes action=block profile=any program="$Image"
+					netsh advfirewall firewall add rule name="Sysmon EDR Block $Image out" protocol=tcp dir=out enable=yes action=block profile=any program="$Image"
+				}
+			}
+            else {
+            }
+        }
+        #DNS Events
+		if($EventID -eq 22)
+        {
+            $msg = $Message -split "`r`n"
+			$msg2 = $msg.replace(': ','=').replace('\','\\')
+			$msg3 = $msg2 | Select -Skip 2
+			$sysmon = $msg3 | ConvertFrom-StringData
+			#
+            #Debug $Message uncomment to remove
+            foreach($i in $msg){Write-Host $i}
+			#
+			# Key/Value Tags from Sysmon RuleName
+			$data = $msg[1] -split ','
+			$data2 = $data |ConvertFrom-StringData
+			$MitreRef = $data2."MitreRef"
+			$Technique = $data2."Technique"
+			$Tactic = $data2."Tactic"
+			$Alert = $data2."Alert"
+			#
+			# Sysmon Event ID 22 Vars
+			$UtcTime = $sysmon."UtcTime"
+			$ProcessGuid = $sysmon."ProcessGuid"
+			$ProcessId = $sysmon."ProcessId"
+			$Image = $sysmon."Image"
+			$QueryName = $sysmon."QueryName"
+			$QueryResults = $sysmon."QueryResults"
+			$QueryStatus = $sysmon."QueryStatus"
+			#
+			# Begin Actions
+            if($msg[1].ToLower().Contains("alert=")) #Mitre Attack Desktop Alerts
+            {
+				# Desktop Alerts
+                Write-Host "[+] Alert: $Alert Process: $Image Initiated DNS Request to $QueryName with the results: $QueryResults from Process ID: $ProcessId at $UtcTime"
+                if($Notify){
+                    $message = "Alert: " + $Alert + "`n" + "Technique: " + $Technique + "`n" + "Tactic: " + $Tactic + "`n" + " $Alert Process: $Image Initiated DNS Request to $QueryName with the results: $QueryResults from ProcessID: $ProcessId at $UtcTime" + "`n" + "$notification"
+                    $message | msg *
+                }
+				#Process Killer
+				if($msg[1].ToLower().Contains("kp=y")){
+					Write-Host "[+] Killing: $ProcessId"
+					taskkill /F /T /PID $ProcessId
+				}
+				# Yara Scan
+				if($msg[1].ToLower().Contains("yara=y")){
+					Write-Host "[+] Scanning $Image with Yara..."
+					$result = C:\programdata\edr\yara64.exe -c $yararules "$Image"
+					if($result -gt "0"){ 
+					Write-Host "[+] Yara detected file $Image as malicious or suspicious..."
+					if($msg[1].ToLower().Contains("ydel=y")){
+						Write-Host "[+] Deleting file $Image"
+						Remove-Item -Path "$Image" -Force
+					}
+                    }
+					else {
+						Write-Host "[-] Yara detected file as clean.."
+					}
 				}
 				# Firewall Blocking
 				if($msg[1].ToLower().Contains("fw=y")){
