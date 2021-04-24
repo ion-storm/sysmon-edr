@@ -1,4 +1,5 @@
 ## sysmon-edr
+![](sysmonedr.gif)
 
 # Sysmon EDR Active Response Features
 * Mitre ATT&CK Desktop Alerts
@@ -8,6 +9,7 @@
 * Blocking of Process network connectivity with Windows Firewall
 * Response with Yara Detections
 
+Developers wanted, this project should be community developed.
 
 # Planned Future features:
 * Host isolation with null routes
