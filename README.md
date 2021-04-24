@@ -4,6 +4,7 @@
 # Sysmon EDR Active Response Features
 * Mitre ATT&CK Desktop Alerts
 * Yara Scanning
+* Ransomware/File Delete Auto-Restore of Files to original directories.
 * Malicious Process Killing
 * Killing of Malicious process connections
 * Blocking of Process network connectivity with Windows Firewall
