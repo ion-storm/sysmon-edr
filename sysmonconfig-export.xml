@@ -1,0 +1,268 @@
+<!--
+  author:	ionstorm
+  project:	https://github.com/ion-storm/sysmon-config
+  license:	Creative Commons Attribution 4.0 | You may privatize, fork, edit, teach, publish, or deploy for commercial use - with attribution in the text.
+-->
+<Sysmon schemaversion="4.50">
+<!--
+  _    _              _                _                      _  _    _                     
+ | |  | |            | |        /\    | |                    (_)| |  | |                    
+ | |__| |  __ _  ___ | |__     /  \   | |  __ _   ___   _ __  _ | |_ | |__   _ __ ___   ___ 
+ |  __  | / _` |/ __|| '_ \   / /\ \  | | / _` | / _ \ | '__|| || __|| '_ \ | '_ ` _ \ / __|
+ | |  | || (_| |\__ \| | | | / ____ \ | || (_| || (_) || |   | || |_ | | | || | | | | |\__ \
+ |_|  |_| \__,_||___/|_| |_|/_/    \_\|_| \__, | \___/ |_|   |_| \__||_| |_||_| |_| |_||___/
+                                           __/ |                                            
+                                          |___/                                             
+ -->
+	<HashAlgorithms>md5,imphash,sha256</HashAlgorithms> <!-- Both MD5 and SHA256 are the industry-standard algorithms for identifying files -->
+	<CheckRevocation/>
+	<ArchiveDirectory>DeletedFiles</ArchiveDirectory>
+	<EventFiltering>
+<!--
+			Rule Example:
+			<Rule name="" groupRelation="and">
+				
+			</Rule>
+  _____                                     _____                    _        
+ |  __ \                                   / ____|                  | |       
+ | |__) |_ __  ___    ___  ___  ___  ___  | |      _ __  ___   __ _ | |_  ___ 
+ |  ___/| '__|/ _ \  / __|/ _ \/ __|/ __| | |     | '__|/ _ \ / _` || __|/ _ \
+ | |    | |  | (_) || (__|  __/\__ \\__ \ | |____ | |  |  __/| (_| || |_|  __/
+ |_|    |_|   \___/  \___|\___||___/|___/  \_____||_|   \___| \__,_| \__|\___|
+                                                                              
+                                                                              
+-->
+	<RuleGroup name="Info=ProcessCreate include Group" groupRelation="or">
+		<ProcessCreate onmatch="include">
+			<!--Custom Rules-->
+			<Rule name="MitreRef=T1203,Technique=Exploitation for Client Execution,Tactic=Execution,Alert=Office Hacking Detected,kpp=y,kp=y" groupRelation="and">
+				<ParentImage condition="contains any">winword.exe;excel.exe;powerpnt.exe;outlook.exe;msaccess.exe;mspub.exe;visio.exe;notepad.exe;wordpad.exe;eqnedt32.exe</ParentImage>
+				<Image condition="contains any">cscript.exe;wscript.exe;cmd.exe;powershell.exe;bash.exe;scrcons.exe;schtasks.exe;hh.exe;regsvr32.exe;regsvcs.exe;sh.exe;wmic.exe;mshta.exe;rundll32.exe;msiexec.exe;forfiles.exe;scriptrunner.exe;mftrace.exe;AppVLP.exe;svchost.exe;MicroScMgmt.exe;FLTLDR.exe;wmic.exe;Microsoft.Workflow.Compiler.exe;atbroker.exe;bginfo.exe;certutil.exe;csi.exe;dnx.exe;cdb.exe;bitsadmin.exe;forfiles.exe;fsi.exe;ftp.exe;hostname.exe;gpresult.exe;ipconfig.exe;nbtstat.exe;ping.exe;pwsh.exe;qprocess.exe;quser.exe;qwinsta.exe;reg.exe;svchost.exe;installutil.exe;pwsh.exe;msxsl.exe;ieexec.exe</Image>
+				<CommandLine condition="excludes">C:\Windows\system32\spool\DRIVERS\</CommandLine>
+				<CommandLine condition="excludes">\AppData\Roaming\com.ringcentral.rcoutlook</CommandLine>
+				<CommandLine condition="excludes">Wget\MSRS.bat</CommandLine>
+				<CommandLine condition="excludes">PhotoViewer.dll</CommandLine>
+			</Rule>
+		</ProcessCreate>
+	</RuleGroup>
+	<RuleGroup name="Info=Process Create Exclude Group" groupRelation="or">
+		<ProcessCreate onmatch="exclude">
+		</ProcessCreate>
+	</RuleGroup>
+<!--
+  _   _        _                          _      _____                                  _   
+ | \ | |      | |                        | |    / ____|                                | |  
+ |  \| |  ___ | |_ __      __ ___   _ __ | | __| |      ___   _ __   _ __    ___   ___ | |_ 
+ | . ` | / _ \| __|\ \ /\ / // _ \ | '__|| |/ /| |     / _ \ | '_ \ | '_ \  / _ \ / __|| __|
+ | |\  ||  __/| |_  \ V  V /| (_) || |   |   < | |____| (_) || | | || | | ||  __/| (__ | |_ 
+ |_| \_| \___| \__|  \_/\_/  \___/ |_|   |_|\_\ \_____|\___/ |_| |_||_| |_| \___| \___| \__|
+                                                                                            
+                                                                                            
+-->
+	<RuleGroup name="Info=NetworkConnect include Group" groupRelation="or">
+		<NetworkConnect onmatch="include">
+			<Rule name="MitreRef=T1105,Technique=Remote File Copy,Tactic=Command And Control,Alert=Powershell,kc=y,kp=y" groupRelation="and">
+				<Image condition="image">powershell.exe</Image>
+				<DestinationIp condition="excludes any">0:0:0:0:0:0:0:</DestinationIp>
+				<DestinationIp condition="excludes any">127.0.0.1</DestinationIp>
+			</Rule>
+		</NetworkConnect>
+	</RuleGroup>
+	<RuleGroup name="Info=NetworkConnect exclude Group" groupRelation="or">
+		<NetworkConnect onmatch="exclude">
+		</NetworkConnect>
+	</RuleGroup>
+
+<!--
+  ______  _  _         _____                    _        
+ |  ____|(_)| |       / ____|                  | |       
+ | |__    _ | |  ___ | |      _ __  ___   __ _ | |_  ___ 
+ |  __|  | || | / _ \| |     | '__|/ _ \ / _` || __|/ _ \
+ | |     | || ||  __/| |____ | |  |  __/| (_| || |_|  __/
+ |_|     |_||_| \___| \_____||_|   \___| \__,_| \__|\___|
+                                                         
+                                                                  
+-->
+	<RuleGroup name="Info=FileCreate include Group" groupRelation="or">
+		<FileCreate onmatch="include">
+			<Rule name="MitreRef=T1505,Technique=SSC Webshell,Tactic=Persistence,Alert=Webshell Detected,yara=y,ydel=y" groupRelation="and">
+				<TargetFilename condition="begin with">C:\inetpub\wwwroot\</TargetFilename>
+				<TargetFilename condition="end with">.aspx</TargetFilename>
+			</Rule>
+		</FileCreate>
+	</RuleGroup>
+	<RuleGroup name="Info=FileCreate exclude Group" groupRelation="or">
+		<FileCreate onmatch="exclude">
+			<Rule name="remove startup tmp file" groupRelation="and">
+				<TargetFilename condition="end with">.tmp</TargetFilename>
+				<TargetFilename condition="contains">Microsoft\Windows\Start Menu\Programs\Startup\</TargetFilename>
+				<Image condition="image">System</Image>
+			</Rule>
+		</FileCreate>
+	</RuleGroup>
+
+	<RuleGroup name="Info=DNS Query Includes" groupRelation="or">
+		<DnsQuery onmatch="include">
+			<!--MITRE ATTACK Queries-->
+			<Rule name="MitreRef=T1048,Technique=Exfiltration Over Alternative Protocol,Tactic=Exfiltration,Info=Powershell TXT Record exfiltration" groupRelation="and">
+				<QueryResults condition="contains any">type: 16;type:  16</QueryResults>
+				<Image condition="image">powershell.exe</Image>
+			</Rule>
+		</DnsQuery>
+	</RuleGroup>
+	<RuleGroup name="Info=DNS Query Excludes" groupRelation="or">
+		<DnsQuery onmatch="exclude">
+			<!-- Image Exclusions -->
+			<Image condition="end with">git-remote-https.exe</Image>
+		</DnsQuery>
+	</RuleGroup>
+	<RuleGroup name="Info=CreateRemoteThread include Group" groupRelation="or">
+		<CreateRemoteThread onmatch="include">
+			<!--Custom Rules-->
+			<Rule name="MitreRef=T1003,Technique=Credential Dumping,Tactic=Credential Access,Alert=Credential Dumping from lsass" groupRelation="and">
+				<StartAddress condition="is">0x001A0000</StartAddress>
+				<TargetImage condition="image">c:\windows\system32\lsass.exe</TargetImage>
+			</Rule>
+			<Rule name="MitreRef=T1055,Technique=Process Injection,Tactic=Defense Evasion/Privledge Escalation,Alert=CreateRemoteThread with msiexec" groupRelation="and">
+				<SourceImage condition="contains any">msiexec.exe</SourceImage>
+			</Rule>
+			<Rule name="MitreRef=T1055,Technique=Process Injection,Tactic=Defense Evasion,Info=Remote Thread Injection Targetting Web Browser" groupRelation="and">
+				<TargetImage condition="contains any">chrome.exe;firefox.exe;edge.exe;browser_broker.exe;iexplore.exe</TargetImage>
+			</Rule>
+			<Rule name="Info=LSASS Credential dumping" groupRelation="and">
+				<StartAddress condition="is">0x001A0000</StartAddress>
+				<TargetImage condition="image">c:\windows\system32\lsass.exe</TargetImage>
+			</Rule>
+			<Rule name="Info=Rundll32 LSASS Credential dumping" groupRelation="and">
+				<TargetImage condition="image">c:\windows\system32\lsass.exe</TargetImage>
+				<SourceImage condition="image">c:\windows\system32\rundll32.exe</SourceImage>
+			</Rule>
+			<Rule name="MitreRef=T0000,Technique=Process Debugging Detected,Tactic=Defense Evasion,Alert=Remote Thread Process debugging detected" groupRelation="and">
+				<StartFunction condition="contains">DbgUiRemoteBreakin</StartFunction>
+				<TargetImage condition="excludes">nacl64.exe</TargetImage>
+			</Rule>
+			<Rule name="MitreRef=T0000,Technique=Process Debugging Detected,Tactic=Defense Evasion,Info=Remote Query Debug info" groupRelation="and">
+				<StartFunction condition="contains">QueryProcessDebugInformationRemote</StartFunction>
+				<TargetImage condition="excludes">nacl64.exe</TargetImage>
+			</Rule>
+			<Rule name="MitreRef=T0000,Technique=Process Debugging Detected,Tactic=Defense Evasion,Info=Query Debug info 2" groupRelation="and">
+				<StartFunction condition="contains">isdebuggerpresent</StartFunction>
+				<TargetImage condition="excludes">nacl64.exe</TargetImage>
+			</Rule>
+			<Rule name="MitreRef=T0000,Technique=Process Debugging Detected,Tactic=Defense Evasion,Alert=Process Debug of active Process" groupRelation="and">
+				<StartFunction condition="contains">DebugActiveProcess</StartFunction>
+				<TargetImage condition="excludes">nacl64.exe</TargetImage>
+			</Rule>
+			<Rule name="MitreRef=T1055,Technique=Process Injection,Tactic=Defense Evasion,Alert=LoadLibrary DLL Injection" groupRelation="and">
+				<StartFunction condition="contains">LoadLibrary</StartFunction>
+				<SourceImage condition="excludes">Enterprise\Common7\IDE\devenv.exe</SourceImage>
+				<SourceImage condition="excludes">C:\Windows\System32\DriverStore\FileRepository\</SourceImage>
+				<SourceImage condition="excludes">\AppData\Roaming\PeoplesBank\PeoplesBank Secure Browser\mscbssb.exe</SourceImage>
+				<SourceImage condition="excludes">C:\Windows\ImmersiveControlPanel\SystemSettings.exe</SourceImage>
+				<SourceImage condition="excludes">C:\Program Files\Bitdefender\Endpoint Security\EPSecurityService.exe</SourceImage>
+				<SourceImage condition="excludes">C:\Program Files\NVIDIA Corporation\Display.NvContainer\NVDisplay.Container.exe</SourceImage>
+				<SourceImage condition="excludes">C:\Windows\System32\igfxEM.exe</SourceImage>
+				<SourceImage condition="excludes">C:\Windows\System32\igfxHK.exe</SourceImage>
+			</Rule>
+			<Rule name="Info=Crypt API Usage" groupRelation="and">
+				<StartFunction condition="contains any">CryptAcquireContextA;CryptDecodeObjectEx;CryptImportPublicKeyInfo;CryptEncrypt;CryptGenKey;CryptDecrypt;CryptStringToBinary;CryptBinaryToString;CryptImportKey</StartFunction>
+			</Rule>
+			<Rule name="Info=Clipboard Usage Detected" groupRelation="and">
+				<SourceImage condition="image">c:\windows\system32\csrss.exe</SourceImage>
+				<StartFunction condition="contains">CrtlRoutine</StartFunction>
+			</Rule>
+			<StartAddress name="MitreRef=T1055,Technique=Process Injection,Tactic=Defense Evasion,Alert=Cobalt Strike Detected 1" condition="end with">0B80</StartAddress>
+			<StartAddress name="MitreRef=T1055,Technique=Process Injection,Tactic=Defense Evasion,Alert=Cobalt Strike Detected 2" condition="end with">0C7C</StartAddress>
+			<StartAddress name="MitreRef=T1055,Technique=Process Injection,Tactic=Defense Evasion,Alert=Cobalt Strike Detected 3" condition="end with">0C88</StartAddress>
+			<TargetImage name="Info=Remote Desktop injection" condition="image">c:\windows\system32\mstsc.exe</TargetImage>
+		</CreateRemoteThread>
+	</RuleGroup>
+	<RuleGroup name="Info=CreateRemoteThread exclude Group" groupRelation="or">
+		<CreateRemoteThread onmatch="exclude">
+			<!--COMMENT: Exclude mostly-safe sources and log anything else.-->
+			<SourceImage condition="image">C:\Windows\system32\wbem\WmiPrvSE.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\SysWOW64\wbem\WmiPrvSE.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\system32\svchost.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\system32\wininit.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\system32\services.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\system32\winlogon.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\system32\audiodg.exe</SourceImage>
+			<TargetImage condition="end with">Google\Chrome\Application\chrome.exe</TargetImage>
+			<TargetImage condition="image">C:\Programdata\sysmon\sysmon64.exe</TargetImage>
+			<SourceImage condition="contains">FireSvc.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\Webroot\WRSA.exe</SourceImage>
+			<TargetImage condition="end with">controls\cef\ConnectWise.exe</TargetImage>
+			<SourceImage condition="image">C:\Program Files\N-able Technologies\AVDefender\EPSecurityService.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\Bitdefender\Endpoint Security\epsecurityservice.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\Kaspersky Lab\Kaspersky Endpoint Security 10 for Windows SP1\avp.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\Remote Debugger\x64\msvsmon.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\System32\rdpclip.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\sysmon64.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\sysmon.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\Confer\RepMgr.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\N-able Technologies\Windows Agent\bin\agent.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\N-able Technologies\Tools\AVDefenderTools\NableAVDBridge.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\N-able Technologies\Windows Agent\bin\NableSixtyFourBitManager.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\N-able Technologies\Windows Agent\bin\AutomationManager.ScriptRunner64.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\N-able Technologies\Windows Agent\bin\ShadowProtectDataReader.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\BeAnywhere Support Express\GetSupportService_N-Central\BASupTSHelper.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\N-able Technologies\AVDefender\epconsole.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\N-able Technologies\AVDefender\downloader.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\N-able Technologies\Windows Agent\bin\bitsadmin.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\IntelliConnect Search\BackgroundHost64.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\Classic Shell\ClassicIE_64.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\WinZip\FAHWindow64.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\WinZip\FAHWindow.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\Remote Debugger\x64\msvsmon.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\VMware\VMware Tools\vmtoolsd.exe</SourceImage>
+			<SourceImage condition="image">C:\Program Files\VMware\VMware Tools\VMwareResolutionSet.exe</SourceImage>
+			<SourceImage condition="image">C:\Windows\System32\ieetwcollector.exe</SourceImage>
+			<SourceImage condition="image">TNSLSNR.EXE</SourceImage>
+			<SourceImage condition="begin with">C:\Program Files (x86)\Microsoft Visual Studio\</SourceImage>
+			<SourceImage condition="begin with">C:\Program Files\Microsoft Visual Studio\</SourceImage>
+			<SourceImage condition="begin with">C:\Program Files\SentinelOne\</SourceImage>
+			<SourceImage condition="begin with">C:\Program Files (x86)\CheckPoint\</SourceImage>
+			<SourceImage condition="begin with">C:\Program Files\VMware\</SourceImage>
+		</CreateRemoteThread>
+	</RuleGroup>
+<!--
+  _____               _       _                 ______                   _   
+ |  __ \             (_)     | |               |  ____|                 | |  
+ | |__) | ___   __ _  _  ___ | |_  _ __  _   _ | |__ __   __ ___  _ __  | |_ 
+ |  _  / / _ \ / _` || |/ __|| __|| '__|| | | ||  __|\ \ / // _ \| '_ \ | __|
+ | | \ \|  __/| (_| || |\__ \| |_ | |   | |_| || |____\ V /|  __/| | | || |_ 
+ |_|  \_\\___| \__, ||_||___/ \__||_|    \__, ||______|\_/  \___||_| |_| \__|
+                __/ |                     __/ |                              
+               |___/                     |___/                               
+         
+-->
+	<RuleGroup name="Info=RegistryEvent include Group" groupRelation="or">
+		<RegistryEvent onmatch="include">
+			<Rule name="MitreRef=T1060,Technique=Registry Autorun Keys,Tactic=Persistence,Alert=AutoRun Reg Keys,regd=y" groupRelation="and">
+				<TargetObject condition="contains">\CurrentVersion\Run</TargetObject>
+				<TargetObject condition="contains">testing</TargetObject>
+				<TargetObject condition="excludes">\Run\Sentinel Agent</TargetObject>
+				<Image condition="excludes">C:\Program Files\SentinelOne\Sentinel</Image>
+				<Image condition="excludes">}\.be\DattoWindowsAgent.exe</Image>
+			</Rule>
+		</RegistryEvent>
+	</RuleGroup>
+	<RuleGroup name="Info=RegistryEvent exclude Group" groupRelation="or">
+		<RegistryEvent onmatch="exclude">
+		</RegistryEvent>
+	</RuleGroup>
+	<RuleGroup name="Info=FileDelete include Group" groupRelation="or">
+		<FileDelete onmatch="include">
+			<Rule name="MitreRef=T0000,Technique=Test Technique,Tactic=Test Tactic,Alert=Ransomware detected,rf=y" groupRelation="and">
+				<TargetFilename condition="contains">test123</TargetFilename>
+			</Rule>
+		</FileDelete>
+	</RuleGroup>
+	<RuleGroup name="Info=FileDelete exclude Group" groupRelation="or">
+		<FileDelete onmatch="exclude">
+		</FileDelete>
+	</RuleGroup>
+	</EventFiltering>
+</Sysmon>
