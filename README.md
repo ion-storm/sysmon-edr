@@ -6,7 +6,7 @@
 * Yara Scanning
 * Ransomware/File Delete Auto-Restore of Files to original directories.
 * Malicious Process Killing
-* Injected Threat Killer
+* Injected Thread Killer/uninjector
 * Killing of Malicious process connections
 * Blocking of Process network connectivity with Windows Firewall
 * Response with Yara Detections
@@ -30,7 +30,6 @@ Developers wanted, this project should be community developed.
 * Automated threat removal based on signatures and behavior: Process Kill then Quarantine or Delete file, Service stop and quarantine or delete file, Kill process and remove registry persistence, startup folder file removal.
 * Automated upload of malicious files and memory dumps
 * Automated Registry/Scheduled Task/Service and Persistence removal
-* Detection of Injected processes and uninject them
 * VSS Snapshot restoration of files by mounting restore point, copying uninfected files to original location: Could utilize Sysmon's new restore abilities
 * Undo changes made by malware(if it gets that far)
 * Collect incident response data when suspicious activity is detected, upload to repository.
