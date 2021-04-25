@@ -12,7 +12,7 @@
 * Response with Yara Detections
 
 # Instructions 
-Install Sysmon, and format your rules to include Alert= within your sysmon config with the comma seperated key value Active response modifiers specified at the beginning of the Sysmon config file. 
+Install Sysmon, and format your rules to include Alert= within your sysmon config Rulename field with the comma seperated key value Active response modifiers specified at the beginning of the Sysmon config file. 
 Download & Extract the sysmon-edr repository to a folder of your choosing and then run .\install_edr.ps1 then start the sysmon_edr service.
 To stop sysmon EDR, kill the powershell process running as system, until proper service control manager functionality is introduced.
  
