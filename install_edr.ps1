@@ -13,7 +13,6 @@ If (!(Test-Path -Path 'C:\Programdata\edr')){
 	copy-item "$PSScriptRoot\cports.exe" "$installdir" -Force -EA SilentlyContinue
 	copy-item "$PSScriptRoot\yara64.exe" "$installdir" -Force -EA SilentlyContinue
 	copy-item "$PSScriptRoot\china_chopper.yar" "$installdir\yararules\" -Force -EA SilentlyContinue
-	copy-item "$PSScriptRoot\chopper.aspx" "$installdir\yararules\" -Force -EA SilentlyContinue
 	}
 	If (!($service.Length -gt 0)){
 		regedit.exe /s $regpath
