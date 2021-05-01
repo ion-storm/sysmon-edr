@@ -53,7 +53,7 @@ $Force = "TRUE"
 $cports = "C:\programdata\edr\cports.exe"
 $yararules = "C:\programdata\edr\yararules\china_chopper.yar"
 $notification = "A Suspicious event was detected on your system, notify the SOC Team immediately!"
-ipmo C:\programdata\edr\stop-thread.ps1
+Import-Module C:\programdata\edr\stop-thread.ps1
 Register-WmiEvent -Query "Select * From __InstanceCreationEvent Where TargetInstance ISA 'Win32_NTLogEvent' AND TargetInstance.LogFile='Microsoft-Windows-Sysmon/Operational' AND TargetInstance.Message Like '%Alert%'" -SourceIdentifier "Sysmon"
 Try{
 	While ($True) {
@@ -78,7 +78,7 @@ Try{
         {
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			#
             #Debug $Message uncomment to remove
@@ -174,7 +174,7 @@ Try{
 			#
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			$data = $msg[1] -split ','
 			$data2 = $data |ConvertFrom-StringData
@@ -288,7 +288,7 @@ Try{
         {
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			#
             #Debug $Message uncomment to remove
@@ -363,7 +363,7 @@ Try{
         {
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			#
             #Debug $Message uncomment to remove
@@ -439,7 +439,7 @@ Try{
         {
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			#
             #Debug $Message uncomment to remove
@@ -516,7 +516,7 @@ Try{
         {
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			#
             #Debug $Message uncomment to remove
@@ -583,7 +583,7 @@ Try{
         {
             $msg = $Message -split "`r`n"
 			$msg2 = $msg.replace(': ','=').replace('\','\\')
-			$msg3 = $msg2 | Select -Skip 2
+			$msg3 = $msg2 | Select-Object -Skip 2
 			$sysmon = $msg3 | ConvertFrom-StringData
 			#
             #Debug $Message uncomment to remove
